@@ -7,17 +7,23 @@ pub struct Hamming {
     b: String,
 }
 
-impl Hamming {
-    pub fn new(a: &str, b: &str) -> Hamming {
+impl TwoWayCmp for Hamming {
+    fn new(a: &str, b: &str) -> Hamming {
         Hamming {
             a: a.to_string(),
             b: b.to_string(),
         }
     }
+}
 
-    pub fn cmp(&self) -> u32 {
+impl Hamming {
+    pub fn cmp(&self) -> Option<u32> {
         let len_a = i32::try_from(self.a.chars().count()).unwrap();
         let len_b = i32::try_from(self.b.chars().count()).unwrap();
+        if len_a != len_b {
+            return None
+        }
+
         let len_short = if len_a > len_b { len_b } else { len_a };
         let d_len = (len_b - len_a).abs();
         let mut distance = d_len;
@@ -31,7 +37,7 @@ impl Hamming {
             }
         }
 
-        distance.try_into().unwrap()
+        Some(distance.try_into().unwrap())
     }
 }
 
@@ -41,14 +47,16 @@ pub struct Levenshtein {
     b: String,
 }
 
-impl Levenshtein {
-    pub fn new(a: &str, b: &str) -> Levenshtein {
+impl TwoWayCmp for Levenshtein {
+    fn new(a: &str, b: &str) -> Levenshtein {
         Levenshtein {
             a: a.to_string(),
             b: b.to_string(),
         }
     }
+}
 
+impl Levenshtein {
     pub fn cmp(&self) -> u32 {
         let len_a: usize = self.a.chars().count();
         let len_b: usize = self.b.chars().count();
@@ -114,7 +122,6 @@ impl Jaccard {
         let char_a: HashSet<char> = self.a.chars().collect::<HashSet<char>>();
         let char_b: HashSet<char> = self.b.chars().collect::<HashSet<char>>();
     
-        // / char_b.union(&char_b).collect().len();
         let hs_a_i_b: HashSet<_> = char_a.intersection(&char_b).collect();
         let hs_a_u_b: HashSet<_> = char_a.union(&char_b).collect();
         let j = hs_a_i_b.len() as f32/hs_a_u_b.len() as f32;
@@ -132,7 +139,7 @@ mod tests {
 
     #[test]
     fn test_identical() {
-        let h_dist = Hamming::new("abc", "abc").cmp();
+        let h_dist = Hamming::new("abc", "abc").cmp().unwrap();
         let l_dist = Levenshtein::new("abc", "abc").cmp();
         assert_eq!(h_dist, 0);
         assert_eq!(l_dist, 0);
@@ -140,7 +147,7 @@ mod tests {
 
     #[test]
     fn test_onechar_diff() {
-        let h_dist = Hamming::new("abc", "abe").cmp();
+        let h_dist = Hamming::new("abc", "abe").cmp().unwrap();
         let l_dist = Levenshtein::new("abc", "abe").cmp();
         assert_eq!(h_dist, 1);
         assert_eq!(l_dist, 1);
@@ -148,25 +155,25 @@ mod tests {
 
     #[test]
     fn test_whitespace_diff() {
-        let h_dist = Hamming::new("abc ", "abc").cmp();
+        let h_dist = Hamming::new("abc ", "abc").cmp().unwrap_or(0);
         let l_dist = Levenshtein::new("abc ", "abc").cmp();
-        assert_eq!(h_dist, 1);
+        assert_eq!(h_dist, 0);
         assert_eq!(l_dist, 1);
     }
 
     #[test]
     fn test_whitespace_char_diff() {
-        let h_dist = Hamming::new("abc d", "abc").cmp();
+        let h_dist = Hamming::new("abc d", "abc").cmp().unwrap_or(0);
         let l_dist = Levenshtein::new("abc d", "abc").cmp();
-        assert_eq!(h_dist, 2);
+        assert_eq!(h_dist, 0);
         assert_eq!(l_dist, 2);
     }
 
     #[test]
     fn test_whitespace_only() {
-        let h_dist = Hamming::new(" ", "").cmp();
+        let h_dist = Hamming::new(" ", "").cmp().unwrap_or(0);
         let l_dist = Levenshtein::new(" ", "").cmp();
-        assert_eq!(h_dist, 1);
+        assert_eq!(h_dist, 0);
         assert_eq!(l_dist, 1);
     }
 }

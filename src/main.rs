@@ -10,7 +10,7 @@ fn main() {
     }
 
     let x = stringsim::Hamming::new(&args[1][..], &args[2][..]);
-    println!("Ham: {}", x.cmp());
+    println!("Ham: {}", x.cmp().unwrap());
 
     let x = stringsim::Levenshtein::new(&args[1][..], &args[2][..]);
     println!("Lev: {}", x.cmp());
